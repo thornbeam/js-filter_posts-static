@@ -1,11 +1,11 @@
 class main {
   posts: HTMLElement[];
   filterContainer: HTMLElement;
-  keys: HTMLElement[];
-  categoryLinks: HTMLElement[];
-  filterButtons: HTMLAnchorElement[];
+  keys: NodeListOf<HTMLElement>;
+  categoryLinks: NodeListOf<HTMLElement>;
+  filterButtons: NodeListOf<HTMLAnchorElement>;
 
-  constructor(posts, filter_container) {
+  constructor(posts: HTMLElement[], filter_container: HTMLElement) {
     this.posts = posts;
     this.filterContainer = filter_container;
     this.keys = filter_container.querySelectorAll(".filter-keys .key");
@@ -35,7 +35,7 @@ class main {
         }
 
         const e = link.querySelector(".amount-posts");
-        if (e.textContent === "(0)") {
+        if (e && e.textContent === "(0)") {
           link.classList.add("disabled");
         }
       });
@@ -47,7 +47,9 @@ class main {
     const keys: string[] = [];
     this.keys.forEach((key) => {
       const textContent = key.textContent;
-      keys.push(textContent);
+      if (textContent) {
+        keys.push(textContent);
+      }
     });
 
     if (this.posts && keys) {
@@ -78,31 +80,37 @@ class main {
         const removeButton = this.filterContainer.querySelector(
           ".filter-buttons .button-group .remove-filter." + key
         );
-        removeButton.addEventListener("click", () => {
-          // get current url
-          const url = new URL(location.href);
-          params = new URLSearchParams(url.search);
-          params.delete(key);
-          history.pushState(
-            {},
-            "",
-            url.origin + url.pathname + params.toString()
-          );
-          this.updateDisplay(params);
-        });
+
+        if (removeButton) {
+          removeButton.addEventListener("click", () => {
+            // get current url
+            const url = new URL(location.href);
+            params = new URLSearchParams(url.search);
+            params.delete(key);
+            history.pushState(
+              {},
+              "",
+              url.origin + url.pathname + params.toString()
+            );
+            this.updateDisplay(params);
+          });
+        }
       });
     }
   }
 
   updateState(key: string, button: HTMLAnchorElement) {
     const url = new URL(location.href);
-    url.searchParams.set(key, button.getAttribute("href"));
-    history.pushState({}, "", url);
+    const buttonHref = button.getAttribute("href");
+    if (buttonHref) {
+      url.searchParams.set(key, buttonHref);
+      history.pushState({}, "", url);
 
-    const curQuery = document.location.search;
-    const params = new URLSearchParams(curQuery);
+      const curQuery = document.location.search;
+      const params = new URLSearchParams(curQuery);
 
-    this.updateDisplay(params);
+      this.updateDisplay(params);
+    }
   }
 
   updateDisplay(params: URLSearchParams) {
@@ -112,13 +120,13 @@ class main {
       this.filterContainer.querySelectorAll(
         ".filter-buttons .button-group .remove-filter"
       );
-    let tmpButtons = [];
+    let tmpButtons: HTMLElement[] = [];
 
     const textFields: NodeListOf<HTMLElement> =
       this.filterContainer.querySelectorAll(
         ".filter-buttons .button-group .current-selection"
       );
-    let tmpFields = [];
+    let tmpFields: HTMLElement[] = [];
 
     params.forEach((value, key) => {
       tmpPosts = tmpPosts.filter((post) =>
